@@ -1,6 +1,8 @@
 #include <boost/numeric/odeint.hpp>
+#include <array>
 #include <cstdio>
 #include <cmath>
+#include <cstring>
 
 struct Vec2D{
 	double x, y;
@@ -28,12 +30,40 @@ struct Vec2D{
 	}
 };
 
-struct Threebody{
-	static double mass[3];
+using ArrayState = std::array<double, 12>;
+
+struct StructState{
 	Vec2D  pos [3];
 	Vec2D  vel [3];
+};
 
-	void operator()(const Threebody &val, Threebody &der, double t){
+static_assert(sizeof(ArrayState) == sizeof(StructState));
+
+struct System{
+	using state = ArrayState;
+	double mass[3];
+	// ArrayState state;
+
+	// http://adsabs.harvard.edu/full/1967AJ.....72..876S
+	void init(ArrayState &ast){
+		StructState sst;
+		mass[0] = 3.0;
+		mass[1] = 4.0;
+		mass[2] = 5.0;
+
+		sst.pos [0] = { 1.0,  3.0};
+		sst.pos [1] = {-2.0, -1.0};
+		sst.pos [2] = { 1.0, -1.0};
+		sst.vel [0] = { 0.0,  0.0};
+		sst.vel [1] = { 0.0,  0.0};
+		sst.vel [2] = { 0.0,  0.0};
+		std::memcpy(&ast, &sst, sizeof(StructState));
+	}
+
+	void operator()(const ArrayState &aval, ArrayState &ader, double t){
+		StructState sval, sder;
+		std::memcpy(&sval, &aval, sizeof(StructState));
+
 		auto grav = [](Vec2D ri, Vec2D rj)->Vec2D {
 			Vec2D  rij = rj - ri;
 			double r2 = rij * rij;
@@ -42,42 +72,48 @@ struct Threebody{
 
 			return r3inv * rij;
 		};
-		Vec2D f01 = grav(val.pos[0], val.pos[1]);
-		Vec2D f12 = grav(val.pos[1], val.pos[2]);
-		Vec2D f20 = grav(val.pos[2], val.pos[0]);
+
+		Vec2D f01 = grav(sval.pos[0], sval.pos[1]);
+		Vec2D f12 = grav(sval.pos[1], sval.pos[2]);
+		Vec2D f20 = grav(sval.pos[2], sval.pos[0]);
 		Vec2D f0 = mass[1] * f01 - mass[2] * f20;
 		Vec2D f1 = mass[2] * f12 - mass[0] * f01;
 		Vec2D f2 = mass[0] * f20 - mass[1] * f12;
 
-		der.vel[0] = f0;
-		der.vel[1] = f1;
-		der.vel[2] = f2;
+		sder.vel[0] = f0;
+		sder.vel[1] = f1;
+		sder.vel[2] = f2;
 
-		der.pos[0] = val.vel[0];
-		der.pos[1] = val.vel[1];
-		der.pos[2] = val.vel[2];
-	}
+		sder.pos[0] = sval.vel[0];
+		sder.pos[1] = sval.vel[1];
+		sder.pos[2] = sval.vel[2];
 
-	double *begin(){
-		return (double*)&pos;
+		std::memcpy(&ader, &sder, sizeof(StructState));
 	}
-	double *end(){
-		return begin() + 6;
-	}
-	const double *begin() const {
-		return (double*)&pos;
-	}
-	const double *end() const {
-		return begin() + 6;
-	}
-	void resize(const size_t) {}
 };
-double Threebody::mass[3];
 
-namespace boost{ namespace numeric{ namespace odeint{
-	template<>
-	struct is_resizeable<Threebody>{
-			static const bool value = boost::true_type::value;
-	};
-} } }
+struct Observer{
+	void operator()(const ArrayState &s, const double t){
+		FILE *fp = stdout;
+		fprintf(fp, "%e  %e %e %e %e %e %e  %e %e %e %e %e %e\n",
+				t,
+				s[0], s[1], s[2], s[3], s[4], s[5],
+				s[6], s[7], s[8], s[9], s[10], s[11]);
+													  
+	}
+};
 
+int main(){
+	System sys;
+	ArrayState state;
+
+	sys.init(state);
+
+	auto Stepper = boost::numeric::odeint::make_controlled<
+		boost::numeric::odeint::runge_kutta_dopri5<ArrayState>>(1.e-8, 1.e-4);
+
+	boost::numeric::odeint::integrate_adaptive(
+			Stepper, sys, state, 0.0, 10.0, 0.01, Observer());
+
+	return 0;
+}
