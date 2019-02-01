@@ -119,12 +119,13 @@ struct Observer{
 
 		double eng = sys.energy(s);
 		double derel = (eng - sys.eng0) / sys.eng0;
+		int era = t / 10;
 
-		fprintf(fp, "%e  %e %e %e %e %e %e  %e %e %e %e %e %e  %e\n",
+		fprintf(fp, "%e  %e %e %e %e %e %e  %e %e %e %e %e %e  %e era%d\n",
 				t,
 				s[0], s[1], s[2], s[3], s[4], s[5],
 				s[6], s[7], s[8], s[9], s[10], s[11],
-				derel);
+				derel, era);
 													  
 	}
 };
@@ -136,9 +137,9 @@ int main(){
 	sys.init(state);
 
 	auto Stepper = boost::numeric::odeint::make_controlled<
-		boost::numeric::odeint::runge_kutta_fehlberg78<ArrayState>>(1.e-12, 1.e-10);
+		boost::numeric::odeint::runge_kutta_fehlberg78<ArrayState>>(1.e-14, 1.e-14);
 
-	double tend = 50.0;
+	double tend = 70.0;
 	boost::numeric::odeint::integrate_adaptive(
 			Stepper, sys, state, 0.0, tend, 0.01, Observer{sys});
 
