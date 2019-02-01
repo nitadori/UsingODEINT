@@ -58,6 +58,8 @@ struct System{
 		sst.vel [1] = { 0.0,  0.0};
 		sst.vel [2] = { 0.0,  0.0};
 		std::memcpy(&ast, &sst, sizeof(StructState));
+
+		this->eng0 = energy(ast);
 	}
 
 	void operator()(const ArrayState &aval, ArrayState &ader, double t){
@@ -90,15 +92,39 @@ struct System{
 
 		std::memcpy(&ader, &sder, sizeof(StructState));
 	}
+
+	double eng0;
+	double energy(const ArrayState &aval) const {
+		StructState sval;
+		std::memcpy(&sval, &aval, sizeof(StructState));
+
+		auto ke = [=](int i)->double {
+			return 0.5 * mass[i] * (sval.vel[i] * sval.vel[i]);
+		};
+		auto pe = [=](int i, int j)->double {
+			return -mass[i] *  mass[j] / (sval.pos[j] - sval.pos[i]).abs();
+		};
+
+		double kesum = ke(0) + ke(1) + ke(2);
+		double pesum = pe(0, 1) + pe(1, 2) + pe(2, 0);
+
+		return kesum + pesum;
+	}
 };
 
 struct Observer{
+	const System &sys;
 	void operator()(const ArrayState &s, const double t){
 		FILE *fp = stdout;
-		fprintf(fp, "%e  %e %e %e %e %e %e  %e %e %e %e %e %e\n",
+
+		double eng = sys.energy(s);
+		double derel = (eng - sys.eng0) / sys.eng0;
+
+		fprintf(fp, "%e  %e %e %e %e %e %e  %e %e %e %e %e %e  %e\n",
 				t,
 				s[0], s[1], s[2], s[3], s[4], s[5],
-				s[6], s[7], s[8], s[9], s[10], s[11]);
+				s[6], s[7], s[8], s[9], s[10], s[11],
+				derel);
 													  
 	}
 };
@@ -110,10 +136,11 @@ int main(){
 	sys.init(state);
 
 	auto Stepper = boost::numeric::odeint::make_controlled<
-		boost::numeric::odeint::runge_kutta_dopri5<ArrayState>>(1.e-8, 1.e-4);
+		boost::numeric::odeint::runge_kutta_fehlberg78<ArrayState>>(1.e-12, 1.e-10);
 
+	double tend = 50.0;
 	boost::numeric::odeint::integrate_adaptive(
-			Stepper, sys, state, 0.0, 10.0, 0.01, Observer());
+			Stepper, sys, state, 0.0, tend, 0.01, Observer{sys});
 
 	return 0;
 }
