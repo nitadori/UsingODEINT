@@ -1,4 +1,11 @@
-#include <boost/numeric/odeint.hpp>
+#if 1
+#  include <boost/numeric/odeint.hpp>
+#else
+#  include <boost/numeric/odeint/integrate/integrate_adaptive.hpp>
+#  include <boost/numeric/odeint/stepper/runge_kutta_fehlberg78.hpp>
+#  include <boost/numeric/odeint/stepper/generation/make_controlled.hpp>
+#  include <boost/numeric/odeint/stepper/generation/generation_runge_kutta_fehlberg78.hpp>
+#endif
 #include <array>
 #include <cstdio>
 #include <cmath>
