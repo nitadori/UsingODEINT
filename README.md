@@ -6,12 +6,13 @@ Boost.Numeric.OdeintにあるRunge–Kutta–Fehlberg78等でピタゴラス三�
 常備分方程式のソルバーなのでやっていることはFORTRAN77の時代と変わることはなく、系の自由度（被積分変数を格納）した配列、これに対して導関数を計算するサブルーチンを（C言語なら関数ポインタで）ソルバーに渡してやるだけです。Stepper、System、Status、Observerと難しそうな横文字がたくさん出てきますが、こいつらさえ整理しておけば大きな苦労はなく書けるのではないでしょうか。
 
 ## API
+呼び出す関数（テンプレート）はこれひとつです。
 ```
-      template<typename Stepper, typename System, typename State, 
-               typename Time, typename Observer> 
-        size_t integrate_adaptive(Stepper stepper, System system, State & state,
-                                  Time start_time, Time end_time, Time dt, Observer observer);
- ```
+template<typename Stepper, typename System, typename State, typename Time, typename Observer> 
+  size_t integrate_adaptive(Stepper stepper, System system, State & state,
+                            Time start_time, Time end_time, Time dt, Observer observer);
+```
+引数から型推論してくれるので呼び出すときに<>は使わずに()の中にべたっと引数を並べるだけです。autoよろしくどんな型でも渡せてしまうわけですが、間違えたものを渡すとバッファに収まりきらない程のコンパイルエラーが画面を埋め尽くします。なのでそれぞれの引数の型を
 
 ## 結果
 60 <= t < 70での起動です。みため的には正しく計算できたようです。
