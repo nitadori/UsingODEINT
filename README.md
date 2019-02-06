@@ -3,9 +3,15 @@
 ## はじめに
 Boost.Numeric.OdeintにあるRunge–Kutta–Fehlberg78等でピタゴラス三体問題をやってみようと思ったのですが、C++は難しくBoostは特に難しいのでいろいろとつまずくことが多かったので、覚え書きを残しておこうと思います。
 
-常備分方程式のソルバーなのでやっていることはFORTRAN77の時代と変わることはなく、系の自由度、被積分変数を格納した配列と導関数を計算するサブルーチンを（C言語なら関数ポインタで）ソルバーに渡してやるだけです。Stepper、System、Status、Observerと難しそうな横文字がたくさん出てきますが、こいつらさえ整理しておけば大きな苦労はなく書けるのではないでしょうか。
+常備分方程式のソルバーなのでやっていることはFORTRAN77の時代と変わることはなく、系の自由度（被積分変数を格納）した配列、これに対して導関数を計算するサブルーチンを（C言語なら関数ポインタで）ソルバーに渡してやるだけです。Stepper、System、Status、Observerと難しそうな横文字がたくさん出てきますが、こいつらさえ整理しておけば大きな苦労はなく書けるのではないでしょうか。
 
 ## API
+```
+      template<typename Stepper, typename System, typename State, 
+               typename Time, typename Observer> 
+        size_t integrate_adaptive(Stepper stepper, System system, State & state,
+                                  Time start_time, Time end_time, Time dt, Observer observer);
+ ```
 
 ## 結果
 60 <= t < 70での起動です。みため的には正しく計算できたようです。
