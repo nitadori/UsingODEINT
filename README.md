@@ -12,7 +12,16 @@ template<typename Stepper, typename System, typename State, typename Time, typen
   size_t integrate_adaptive(Stepper stepper, System system, State & state,
                             Time start_time, Time end_time, Time dt, Observer observer);
 ```
-引数から型推論してくれるので呼び出すときに<>は使わずに()の中にべたっと引数を並べるだけです。autoよろしくどんな型でも渡せてしまうわけですが、間違えたものを渡すとバッファに収まりきらない程のコンパイルエラーが画面を埋め尽くします。なのでそれぞれの引数の型を
+引数から型推論してくれるので呼び出すときに<>は使わずに()の中にべたっと引数を並べるだけです。autoよろしくどんな型でも渡せてしまうわけですが、間違えたものを渡すとバッファに収まりきらない程のコンパイルエラーが画面を埋め尽くします。なのでそれぞれの引数の型を見ていくことにします。
+
+### State
+系の自由度、被積分変数を格納する配列です。よほどのことがない限り、コンパイル時に次元がわかっていればstd::array、そうでなければstd::vectorを使っておけばいいでしょう。今回は２次元３体問題を扱ったので粒子当たり座標と速度の4語、3体あわせて12語なので
+```
+using ArrayState = std::array<double, 12>;
+```
+としています。
+
+### System
 
 ## 結果
 60 <= t < 70での起動です。みため的には正しく計算できたようです。
