@@ -49,7 +49,7 @@ static_assert(sizeof(ArrayState) == sizeof(StructState));
 struct System{
 	using state = ArrayState;
 	double mass[3];
-	// ArrayState state;
+	static long neval;
 
 	// http://adsabs.harvard.edu/full/1967AJ.....72..876S
 	void init(ArrayState &ast){
@@ -98,6 +98,8 @@ struct System{
 		sder.pos[2] = sval.vel[2];
 
 		std::memcpy(&ader, &sder, sizeof(StructState));
+
+		neval++;
 	}
 
 	double eng0;
@@ -118,6 +120,8 @@ struct System{
 		return kesum + pesum;
 	}
 };
+
+long System::neval = 0;
 
 struct Observer{
 	const System &sys;
@@ -156,6 +160,8 @@ int main(int ac, char **av){
 	double tend = 70.0;
 	boost::numeric::odeint::integrate_adaptive(
 			Stepper, sys, state, 0.0, tend, 0.01, Observer{sys});
+
+	fprintf(stderr, "%ld total evaluations\n", System::neval);
 
 	return 0;
 }
