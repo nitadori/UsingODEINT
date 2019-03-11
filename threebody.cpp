@@ -154,8 +154,12 @@ int main(int ac, char **av){
 
 	sys.init(state);
 
+#ifndef BSINT
 	auto Stepper = boost::numeric::odeint::make_controlled<
 		boost::numeric::odeint::runge_kutta_fehlberg78<ArrayState>>(eabs, erel);
+#else
+	boost::numeric::odeint::bulirsch_stoer<ArrayState> Stepper(eabs, erel);
+#endif
 
 	double tend = 70.0;
 	boost::numeric::odeint::integrate_adaptive(

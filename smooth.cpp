@@ -160,14 +160,19 @@ struct Observer{
 		double time = s[12];
 		int era = time / 10;
 
-		fprintf(fp, "%e  %e %e %e %e %e %e  %e %e %e %e %e %e  %e %e era%d\n",
+		double dt = tfic - tlast;
+		tlast = tfic;
+
+		fprintf(fp, "%e  %e %e %e %e %e %e  %e %e %e %e %e %e  %e %e %e era%d\n",
 				s[12],
 				s[0], s[1], s[2], s[3], s[4], s[5],
 				s[6], s[7], s[8], s[9], s[10], s[11],
-				derel, tfic, era);
+				derel, tfic, dt, era);
 													  
 	}
+	static double tlast;
 };
+double Observer::tlast = 0.0;
 
 int main(int ac, char **av){
 	double eabs = 1.e-14;
@@ -182,8 +187,12 @@ int main(int ac, char **av){
 
 	sys.init(state);
 
+#ifndef BSINT
 	auto Stepper = boost::numeric::odeint::make_controlled<
 		boost::numeric::odeint::runge_kutta_fehlberg78<ArrayState>>(eabs, erel);
+#else
+	boost::numeric::odeint::bulirsch_stoer<ArrayState> Stepper(eabs, erel);
+#endif
 
 	double tend = 1950.0;
 	boost::numeric::odeint::integrate_adaptive(

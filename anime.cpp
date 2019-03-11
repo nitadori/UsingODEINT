@@ -184,13 +184,17 @@ struct Observer{
 													  
 		if(time >= tnext){
 			fprintf(gp, "set title \"t = %f\"\n", time);
-			fprintf(gp, "plot '-' pt 7 ps 1, '-' pt 7 ps 1, '-' pt 7 ps 1\n");
+			fprintf(gp, "plot '-' pt 7 ps 1, '-' pt 7 ps 1, '-' pt 7 ps 1, '-' w l lt 1 , '-' w l lt 2, '-' w l lt 3, \n");
 			fprintf(gp, "%e, %e\n", s[0], s[1]);
 			fprintf(gp, "e\n");
 			fprintf(gp, "%e, %e\n", s[2], s[3]);
 			fprintf(gp, "e\n");
 			fprintf(gp, "%e, %e\n", s[4], s[5]);
 			fprintf(gp, "e\n");
+
+			fprintf(gp, "%e %e\n%e %e\ne\n", s[2], s[3], s[4], s[5]);
+			fprintf(gp, "%e %e\n%e %e\ne\n", s[4], s[5], s[0], s[1]);
+			fprintf(gp, "%e %e\n%e %e\ne\n", s[0], s[1], s[2], s[3]);
 
 			tnext += tick;
 		}
