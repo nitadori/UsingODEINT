@@ -100,10 +100,10 @@ struct Observer{
 		double dt = tfic - tlast;
 		tlast = tfic;
 
-		fprintf(fp, "%e  %e %e  %e %e  %e %e %e\n",
-				time,
+		fprintf(fp, "%e %e  %e %e  %e %e  %e %e\n",
+				time, tfic,
 				s[0], s[1], s[2], s[3],
-				derel, tfic, dt);
+				derel, dt);
 													  
 	}
 	static double tlast;
@@ -136,7 +136,7 @@ int main(int ac, char **av){
 
 	double tend = 10.0;
 	boost::numeric::odeint::integrate_adaptive(
-			Stepper, sys, state, 0.0, tend, 0.01, Observer{sys});
+			Stepper, sys, state, 0.0, tend, 0.1, Observer{sys});
 
 	fprintf(stderr, "%ld total evaluations\n", System::neval);
 
