@@ -2,7 +2,56 @@
 #include <cstdio>
 #include <cmath>
 #include <cstring>
+#include <cassert>
 
+template<
+	class    SYS,
+	typename T,
+	size_t   N>
+void check_convergence(
+		  SYS &sys, 
+		  const T &t, 
+		  const T &h, 
+		  std::array<T,N> &y,
+		  const std::array<T,N> &yref)
+{
+	using State = std::array<T,N>;
+	State f, fmid;
+	sys(y, f, t);
+	
+	State ymid, y1;
+	for(size_t i=0; i<N; i++){
+		ymid[i] = y[i] + 0.5*h * f[i];
+	}
+
+	sys(ymid, fmid, t + 0.5*h);
+
+	for(size_t i=0; i<N; i++){
+		y1[i] = y[i] + h * fmid[i];
+	}
+	 // iteration
+	auto break_flag = false;
+	for(int n=0; n<100; n++){
+		State f1;
+		sys(y1, f1, t + h);
+
+		T err_max = 0.0;
+		State ynew, ydiff, yerr;
+		for(size_t i=0; i<N; i++){
+			ynew [i] = y[i] + 0.5*h * (f[i] + f1[i]);
+			ydiff[i] = ynew[i] - y1[i];
+			y1   [i] = ynew[i];
+
+			err_max = std::max(err_max, std::fabs(ydiff[i]));
+
+			yerr[i] = ynew[i] - yref[i];
+		}
+		printf("%d %e %e %e %e !conv\n", n, yerr[0], yerr[1], yerr[2], yerr[3]);
+
+		if(break_flag) break;
+		if(err_max < 1.e-15) break_flag = true;
+	}
+}
 
 template<
 	class    SYS,
@@ -65,11 +114,12 @@ void integrate(
 		}
 
 		if(break_flag) break;
-		if(err_max < 1.e-15) break_flag = true;;
-
+		if(err_max < 1.e-15) break_flag = true;
 	}
 
 	obs(y1, t+h);
+
+	check_convergence(sys, t, h, y, y1);
 
 	// commit
 	for(size_t i=0; i<N; i++){
@@ -209,6 +259,9 @@ int main(int ac, char **av){
 		eabs = atof(av[2]);
 		erel = atof(av[3]);
 	}
+
+	assert(ecc > 0.0);
+	assert(ecc <= 1.0);
 
 	System sys;
 	ArrayState state;
